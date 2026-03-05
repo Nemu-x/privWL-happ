@@ -3,7 +3,7 @@ name: build-geosite
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *"   # раз в сутки
+    - cron: "17 3 * * *" # раз в сутки
   push:
     branches: ["main"]
 
@@ -35,8 +35,6 @@ jobs:
       - name: Convert Clash YAML -> domain-list-community data file
         run: |
           python scripts/clash2dlc.py clV2_provider.yaml custom-data privwl
-          # domain-list-community ожидает datapath, внутри которого лежат файлы-списки.
-          # Мы передаём --datapath=custom-data, а файл у нас custom-data/privwl
 
       - name: Checkout v2fly/domain-list-community
         uses: actions/checkout@v4
@@ -71,11 +69,6 @@ jobs:
             "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
             "Geositeurl": "https://raw.githubusercontent.com/${{ github.repository }}/main/geosite.dat",
             "LastUpdated": "$TS",
-            "DnsHosts": {
-              "cloudflare-dns.com": "1.1.1.1",
-              "dns.google": "8.8.8.8"
-            },
-            "DirectSites": [],
             "DirectIp": [
               "10.0.0.0/8",
               "172.16.0.0/12",
@@ -86,6 +79,7 @@ jobs:
             ],
             "ProxySites": ["geosite:privwl"],
             "ProxyIp": [],
+            "DirectSites": [],
             "BlockSites": [],
             "BlockIp": [],
             "DomainStrategy": "IPIfNonMatch",
