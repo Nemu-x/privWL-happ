@@ -9,7 +9,7 @@ only selected domains use the proxy while everything else goes **DIRECT**.
 The domain list is automatically synchronized with the Clash version of this project and rebuilt into a `geosite.dat` database.
 
 ---
-
+![build](https://github.com/Nemu-x/privWL-happ/actions/workflows/build-geosite.yml/badge.svg)
 ![last commit](https://img.shields.io/github/last-commit/Nemu-x/privWL-happ)
 
 ---
@@ -17,11 +17,17 @@ The domain list is automatically synchronized with the Clash version of this pro
 # Features
 
 • Automatic updates via **GitHub Actions**
+
 • Whitelist based routing
+
 • Compatible with **Happ Proxy Utility**
+
 • Uses the **geosite format** from domain-list-community
+
 • Minimal performance impact
+
 • Fully open source
+
 
 ---
 
@@ -43,10 +49,9 @@ happ://routing/onadd/eyJOYW1lIjoicHJpdldMIiwiR2xvYmFsUHJveHkiOiJmYWxzZSIsIlJvdXR
 
 Scan the QR code with your phone.
 
-```
-<img width="343" height="344" alt="image" src="https://github.com/user-attachments/assets/7605f147-d491-4b94-a488-7b8eab28644f" />
 
-```
+![QR](https://raw.githubusercontent.com/Nemu-x/privWL-happ/main/Happ%20ADD%20QR.png)
+
 
 ---
 
@@ -59,6 +64,7 @@ Settings → Routing → **privWL**
 Once enabled:
 
 • Domains in the whitelist → **PROXY**
+
 • Everything else → **DIRECT**
 
 ---
@@ -77,11 +83,11 @@ geosite.dat build
 Used by Happ routing profile
 ```
 
+
 The source domain list is maintained in:
 
-```
-privWL-clash
-```
+[Private WL - Clash](https://github.com/Nemu-x/privWL-clash)
+
 
 GitHub Actions automatically:
 
@@ -112,8 +118,11 @@ The whitelist updates automatically.
 Whenever the Clash list changes:
 
 • GitHub Actions rebuild the database
+
 • A new `geosite.dat` is committed
+
 • Happ automatically uses the updated rules
+
 
 No manual updates required.
 
