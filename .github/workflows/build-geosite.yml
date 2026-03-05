@@ -44,11 +44,15 @@ jobs:
           repository: v2fly/domain-list-community
           path: domain-list-community
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
       - name: Build dlc.dat (geosite binary) from our custom datapath
         run: |
           cd domain-list-community
           go run ./ --datapath=../custom-data
-          # output: dlc.dat в текущей папке
           cp dlc.dat ../geosite.dat
 
       - name: Update routing.json (bump LastUpdated)
