@@ -10,6 +10,7 @@ The domain list is automatically synchronized with the Clash version of this pro
 
 ---
 ![build](https://github.com/Nemu-x/privWL-happ/actions/workflows/build-geosite.yml/badge.svg)
+![maintained](https://img.shields.io/badge/maintained-by%20Nemu--x-purple)
 ![last commit](https://img.shields.io/github/last-commit/Nemu-x/privWL-happ)
 
 ---
