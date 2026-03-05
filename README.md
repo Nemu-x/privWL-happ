@@ -128,14 +128,6 @@ No manual updates required.
 
 ---
 
-# Related projects
-
-• privWL-clash
-• Happ Proxy Utility
-• domain-list-community
-
----
-
 # Disclaimer
 
 This repository only provides routing rules and a domain list.
