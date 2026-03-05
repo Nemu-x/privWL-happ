@@ -1,0 +1,98 @@
+name: build-geosite
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"   # раз в сутки
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install python deps
+        run: |
+          pip install --no-cache-dir pyyaml
+
+      - name: Fetch Clash YAML (source of truth)
+        run: |
+          curl -L \
+            -o clV2_provider.yaml \
+            https://raw.githubusercontent.com/Nemu-x/privWL-clash/main/clV2_provider.yaml
+
+      - name: Convert Clash YAML -> domain-list-community data file
+        run: |
+          python scripts/clash2dlc.py clV2_provider.yaml custom-data privwl
+          # domain-list-community ожидает datapath, внутри которого лежат файлы-списки.
+          # Мы передаём --datapath=custom-data, а файл у нас custom-data/privwl
+
+      - name: Checkout v2fly/domain-list-community
+        uses: actions/checkout@v4
+        with:
+          repository: v2fly/domain-list-community
+          path: domain-list-community
+
+      - name: Build dlc.dat (geosite binary) from our custom datapath
+        run: |
+          cd domain-list-community
+          go run ./ --datapath=../custom-data
+          # output: dlc.dat в текущей папке
+          cp dlc.dat ../geosite.dat
+
+      - name: Update routing.json (bump LastUpdated)
+        run: |
+          TS=$(date +%s)
+          cat > routing.json <<EOF
+          {
+            "Name": "privWL",
+            "GlobalProxy": "false",
+            "RemoteDNSType": "DoH",
+            "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
+            "RemoteDNSIP": "1.1.1.1",
+            "DomesticDNSType": "DoH",
+            "DomesticDNSDomain": "https://dns.google/dns-query",
+            "DomesticDNSIP": "8.8.8.8",
+            "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
+            "Geositeurl": "https://raw.githubusercontent.com/${{ github.repository }}/main/geosite.dat",
+            "LastUpdated": "$TS",
+            "DnsHosts": {
+              "cloudflare-dns.com": "1.1.1.1",
+              "dns.google": "8.8.8.8"
+            },
+            "DirectSites": [],
+            "DirectIp": [
+              "10.0.0.0/8",
+              "172.16.0.0/12",
+              "192.168.0.0/16",
+              "169.254.0.0/16",
+              "224.0.0.0/4",
+              "255.255.255.255"
+            ],
+            "ProxySites": ["geosite:privwl"],
+            "ProxyIp": [],
+            "BlockSites": [],
+            "BlockIp": [],
+            "DomainStrategy": "IPIfNonMatch",
+            "FakeDNS": "false"
+          }
+          EOF
+
+      - name: Commit updated geosite.dat + routing.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add geosite.dat routing.json
+          git commit -m "auto: rebuild geosite.dat" || exit 0
+          git push
