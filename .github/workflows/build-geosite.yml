@@ -10,12 +10,18 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-geosite
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout privWL-happ
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,32 +32,43 @@ jobs:
         run: |
           pip install --no-cache-dir pyyaml
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
       - name: Fetch Clash YAML (source of truth)
         run: |
           curl -L \
             -o clV2_provider.yaml \
             https://raw.githubusercontent.com/Nemu-x/privWL-clash/main/clV2_provider.yaml
 
-      - name: Convert Clash YAML -> domain-list-community data file
+      - name: Convert Clash YAML -> DLC data file (custom list)
         run: |
+          rm -rf custom-data
           python scripts/clash2dlc.py clV2_provider.yaml custom-data privwl
+          echo "---- preview (first 20 lines) ----"
+          head -n 20 custom-data/privwl || true
+          echo "---------------------------------"
 
-      - name: Checkout v2fly/domain-list-community
-        uses: actions/checkout@v4
-        with:
-          repository: v2fly/domain-list-community
-          path: domain-list-community
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-
-      - name: Build dlc.dat (geosite binary) from our custom datapath
+      - name: Build geosite.dat using v2fly/domain-list-community (DLC)
         run: |
+          rm -rf domain-list-community
+          git clone --depth 1 https://github.com/v2fly/domain-list-community.git domain-list-community
           cd domain-list-community
-          go run ./ --datapath=../custom-data
+          # ВАЖНО: go run . (а не ./)
+          go run . --datapath=../custom-data
           cp dlc.dat ../geosite.dat
+
+      - name: Sanity check geosite.dat (must be binary)
+        run: |
+          ls -lh geosite.dat
+          file geosite.dat
+          # если вдруг получился текст — падаем
+          if file geosite.dat | grep -qi "text"; then
+            echo "ERROR: geosite.dat is TEXT, expected BINARY"
+            exit 1
+          fi
 
       - name: Update routing.json (bump LastUpdated)
         run: |
@@ -60,12 +77,6 @@ jobs:
           {
             "Name": "privWL",
             "GlobalProxy": "false",
-            "RemoteDNSType": "DoH",
-            "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
-            "RemoteDNSIP": "1.1.1.1",
-            "DomesticDNSType": "DoH",
-            "DomesticDNSDomain": "https://dns.google/dns-query",
-            "DomesticDNSIP": "8.8.8.8",
             "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
             "Geositeurl": "https://raw.githubusercontent.com/${{ github.repository }}/main/geosite.dat",
             "LastUpdated": "$TS",
@@ -87,10 +98,17 @@ jobs:
           }
           EOF
 
-      - name: Commit updated geosite.dat + routing.json
+      - name: Commit & push if changed
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
+
           git add geosite.dat routing.json
-          git commit -m "auto: rebuild geosite.dat" || exit 0
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "auto: rebuild geosite.dat"
           git push
