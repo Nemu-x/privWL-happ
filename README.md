@@ -1,4 +1,4 @@
-# privWL-happ
+# Nemu-x-WL-happ
 
 Auto-updating **whitelist routing profile** for
 **Happ Proxy Utility**
