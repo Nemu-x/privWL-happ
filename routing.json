@@ -3,7 +3,7 @@
   "GlobalProxy": "false",
   "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
   "Geositeurl": "https://raw.githubusercontent.com/Nemu-x/privWL-happ/main/geosite.dat",
-  "LastUpdated": "1775193329",
+  "LastUpdated": "1775278858",
   "DirectIp": [
     "10.0.0.0/8",
     "172.16.0.0/12",
